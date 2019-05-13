@@ -1,0 +1,22 @@
+https://seleniumhq.github.io/docs/intro.html
+
+Resumo:
+
+SELENIUM
+
+Conjunto de ferramentas para automação de navegadores Web que utiliza as melhores técnicas disponíveis para controle remoto de instâncias do navegador e emulação da interação do usuário com o navegador. Permite que os usuários simulem atividades comuns executadas por usuários finais.
+O Selenium é em sua essência, uma biblioteca de agentes do usuário no navegador. Ele abstrair as diferenças dos navegadores, escondendo seus detalhes e complexidades da pessoa que escreve o código.Utiliza o mesmo código para ser executado no Firefox, IE, Chrome e em outros navegadores suportados.
+
+AUTOMAÇÃO DE TESTE
+
+Testes funcionais de usuário final são caros para serem executados e exige uma infraestrutura boa para executar de uma forma eficaz.
+Questione-se quanto ao que você deseja testar e se existem abordagens mais leves de teste, como testes de unidade ou outros níveis inferiores.
+
+Após identificar que o teste será de navegador Web e com Selenium, deve-se executar uma combinação de três etapas:
+1- Configure os dados
+2- Executar um conjunto discreto de ações
+3- Avalie os resultados
+
+Uma vantagem do Selenium é a capacidade de testar todos os componentes do aplicativo, desde o backend ao frontend da perceptiva do usuário.
+Embora os testes funcionais possam ser caros de serem executados, eles também englobam grandes porções críticas de négocio ao mesmo tempo.
+
