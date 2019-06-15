@@ -1,0 +1,151 @@
+Fonte: https://docs.cypress.io/guides/core-concepts/conditional-testing.html#Definition
+
+## O problema
+Atualmente, os aplicativos JavaScript modernos são altamente dinâmicos e mutáveis. Seu estado e o DOM estão mudando continuamente ao longo de um período de tempo.
+
+## As situações
+A única maneira de fazer testes condicionais no DOM é se você tem 100% de certeza de que o estado foi “resolvido” e não há nenhuma maneira possível de ele mudar.
+
+## Renderização do lado do servidor
+Se o seu aplicativo for renderizado no lado do servidor sem JavaScript que modifica de forma assíncrona o DOM - parabéns, você pode facilmente fazer testes condicionais no DOM!
+
+## Renderização do lado do cliente
+No entanto, na maioria das aplicações modernas nos dias de hoje - quando o load evento ocorre, geralmente nada foi renderizado na tela. Geralmente é nesse momento que seus scripts começam a carregar conteúdo dinâmico e começam a renderizar de forma assíncrona.
+
+Infelizmente, não é possível usar o DOM para fazer testes condicionais. Para fazer isso, é necessário que você saiba com 100% de garantia de que seu aplicativo concluiu toda a renderização assíncrona e que não há solicitações de rede pendentes, setTimeouts, intervalos, postMessage ou código assíncrono / de espera.
+
+Em outras palavras, você não pode fazer testes condicionais com segurança se quiser que seus testes sejam executados 100% de forma consistente.
+
+## As estratégias
+Se você não puder garantir que o DOM é estável - não se preocupe, existem outras maneiras de fazer testes condicionais ou contornar os problemas inerentes a ele.
+
+## Campanha A / B
+Neste exemplo, vamos supor que você visita seu website e o conteúdo será diferente com base na campanha A / B que seu servidor decide enviar. Talvez seja baseado em localização geográfica, endereço IP, hora do dia, localidade ou outros fatores que são difíceis de controlar. Como você pode escrever testes dessa maneira?
+
+## Use params de consulta de URL:
+cy.visit('https://app.com?campaign=A')
+
+## Use o servidor:
+Alternativamente, se o seu servidor salva a campanha com uma sessão, você pode simplesmente pedir ao seu servidor para lhe dizer em qual campanha você está.
+
+cy.request('https://app.com/me')
+  .its('body.campaign')
+  .then((campaign) => {
+    // runs different cypress test code
+    // based on the type of campaign
+    return campaigns.test(campaign)
+  })
+  
+## Use cookies de sessão:
+Talvez uma maneira ainda mais fácil de testar isso seja se o servidor enviou a campanha em um cookie de sessão que você pode ler.
+
+cy.visit('https://app.com')
+cy.getCookie('campaign')
+  .then((campaign) => {
+    return campaigns.test(campaign)
+  })
+  
+## Incorporar dados no DOM:
+
+Outra estratégia válida seria incorporar dados diretamente no DOM - mas fazê-lo de maneira que esses dados estejam sempre presentes e passíveis de consulta. Teria que estar presente 100% do tempo, senão isso não funcionaria.
+
+cy.get('html')
+  .should('have.attr', 'data-campaign').then((campaign) => {
+    return campaigns.test(campaign)
+  })
+
+## Assistente de boas-vindas
+
+Neste exemplo, vamos imaginar que você está executando um monte de testes e cada vez que você carrega seu aplicativo, ele pode mostrar um modal de “Welcome Wizard”.
+Nessa situação, você deseja fechar o assistente quando estiver presente e ignorá-lo, se não estiver.
+O problema com isso é que, se o assistente renderizar de forma assíncrona (como é provável), você não poderá usar o DOM para descartá-lo condicionalmente.
+
+## Use o URL para controlá-lo:
+// dont show the wizard
+cy.visit('https://app.com?wizard=0')
+
+// show the wizard
+cy.visit('https://app.com?wizard=1')
+
+Nós provavelmente precisaríamos apenas atualizar nosso código do lado do cliente para verificar se este parâmetro de consulta está presente. Agora sabemos de antemão se será ou não mostrado.
+
+## Use cookies para saber antecipadamente:
+No caso em que você não pode controlá-lo, você ainda pode descartá-lo condicionalmente se souber se ele será exibido.
+
+cy.visit('https://app.com')
+cy.getCookie('showWizard')
+  .then((val) => {
+    if (val) {
+      // dismiss the wizard conditionally by enqueuing these
+      // three additional commands
+      cy.get('#wizard').contains('Close').click()
+    }
+  })
+  
+  
+## Use seu servidor ou banco de dados:
+Se você armazenar e / ou persistir se deseja mostrar o assistente no servidor, basta perguntar.
+
+cy.visit('https://app.com')
+cy.request('https://app.com/me')
+  .its('body.showWizard')
+  .then((val) => {
+    if (val) {
+      // dismiss the wizard conditionally by enqueuing these
+      // three additional commands
+      cy.get('#wizard').contains('Close').click()
+    }
+  })
+  
+## Incorporar dados no DOM:
+Outra estratégia válida seria incorporar dados diretamente no DOM, mas de forma que os dados estejam sempre presentes e passíveis de consulta. Os dados teriam que estar presentes 100% do tempo, caso contrário, essa estratégia não funcionaria.
+
+cy.get('html').should('have.attr', 'data-wizard').then((wizard) => {
+  if (wizard) {
+    // dismiss the wizard conditionally by enqueuing these
+    // three additional commands
+    cy.get('#wizard').contains('Close').click()
+  }
+})
+
+## Existência de Elemento
+No caso em que você está tentando usar o DOM para fazer testes condicionais, você pode utilizar a capacidade de consultar de forma síncrona elementos no Cypress para criar o fluxo de controle.
+
+
+
+Você não pode fazer testes condicionais no DOM, a menos que você seja:
+
+* Renderização no lado do servidor sem JavaScript assíncrono.
+* Usando JavaScript do lado do cliente que só faz a renderização síncrona.
+* É crucial que você entenda como seu aplicativo funciona, caso contrário, você escreverá testes esquisitos.
+  
+Cypress é construído em torno da criação de testes confiáveis . O segredo para escrever bons testes é fornecer tanto "estado" quanto "fatos" para o Cypress e "proteger" a emissão de novos comandos até que seu aplicativo atinja o estado desejado que precisa para prosseguir.
+
+Fazer testes condicionais adiciona um problema enorme - que o próprio autor do teste não tem certeza de qual será o estado dado. Nessas situações, a única forma confiável de obter testes precisos é incorporar esse estado dinâmico de maneira confiável e consistente.
+
+
+## Texto dinâmico
+O padrão de fazer algo condicionalmente baseado em se determinado texto está ou não presente é idêntico à existência do elemento acima.
+
+cy.get('body').then(($body) => {
+    // synchronously ask for the body's text
+    // and do something based on whether it includes
+    // another string
+    if ($body.text().includes('some string')) {
+      // yup found it
+      cy.get(...).should(...)
+    } else {
+      // nope not here
+      cy.get(...).should(...)
+    }
+  })
+
+## Recuperação de Erros
+
+Se o autor do teste não puder prever com precisão o estado do sistema, nem o Cypress. O tratamento de erros não oferece nenhuma prova adicional de que isso possa ser feito de forma determinística.
+ 
+Mas… para o bem do argumento, vamos imaginar por um momento que você teve tratamento de erros no Cypress.
+
+Habilitar isso significaria que para cada comando, ele se recuperaria de erros, mas somente após cada tempo limite de comando aplicável ser atingido. Como os tempos limite começam em 4 segundos (e excedem de lá), isso significa que ele só falharia depois de um longo período de tempo.
+Na melhor das hipóteses, perdemos pelo menos 4 segundos esperando que o <#wizard>elemento existisse antes de errarmos e continuarmos.
+Se você não pode saber com precisão o estado de sua aplicação, não importa quais idiomas de programação você tenha disponível - você não pode escrever testes determinísticos de 100%.
